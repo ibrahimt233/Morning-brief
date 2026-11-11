@@ -6,10 +6,8 @@ from google import genai
 # ---- Edit this list to your own watchlist ----
 WATCHLIST = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "TSLA"]
 
-# "-latest" aliases follow Google's current Flash model.
-# If you get a model error, check ai.google.dev/gemini-api/docs/models
-# and paste a current free-tier model name here.
-MODEL = "gemini-flash-latest"
+# Tried in order; the first one that works is used.
+MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
 
 
 def get_market_data():
@@ -52,8 +50,13 @@ Write a short morning brief (under 250 words) for a beginner investor:
 
 Do not give buy/sell orders or price predictions. Be clear about uncertainty.
 Plain text only, no markdown."""
-    response = client.models.generate_content(model=MODEL, contents=prompt)
-    return response.text
+
+    for model in MODELS:
+        try:
+            return client.models.generate_content(model=model, contents=prompt).text
+        except Exception as e:
+            print(f"{model} failed: {e}")
+    raise RuntimeError("All models failed")
 
 
 def send_telegram(text):
